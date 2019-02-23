@@ -15,4 +15,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback"  %  "logback-classic"      % logbackVersion
 )
 
-scalacOptions ++= Seq("-Ypartial-unification")
+scalacOptions ++= Seq(
+  "-language:higherKinds",
+  "-Ypartial-unification"
+)
