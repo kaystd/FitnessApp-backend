@@ -1,20 +1,18 @@
 package astu.FitnessApp
 
-import cats.effect.{Effect, IO}
-import fs2.{Stream, StreamApp}
-import fs2.StreamApp.ExitCode
+import cats.effect.{IO, IOApp}
 import org.http4s.server.blaze._
+import cats.effect._
+import cats.implicits._
+import org.http4s.server.{Server => H4Server}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+object Server extends IOApp {
 
-object Server extends StreamApp[IO] {
-  override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
-    createStream(args, requestShutdown)
-
-  def createStream[F[_]](args: List[String], requestShutdown: F[Unit])
-      (implicit E: Effect[F]): Stream[F, ExitCode] =
-    BlazeBuilder[F]
+  def createServer[F[_]: ContextShift : ConcurrentEffect : Timer]: Resource[F, H4Server[F]] =
+    BlazeServerBuilder[F]
       .bindHttp(8080, "localhost")
-      .mountService( new FitnessAppEndpoints().hello, "/")
-      .serve
+      .withHttpApp( new FitnessAppEndpoints().hello)
+      .resource
+
+  def run(args : List[String]) : IO[ExitCode] = createServer.use(_ => IO.never).as(ExitCode.Success)
 }
